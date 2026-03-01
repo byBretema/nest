@@ -3,6 +3,7 @@ C++ CMake Wrapper
 
 
 - For now just run this to compile the project
+
 ```
 ./fresh_compile.sh
 ```

@@ -1,7 +1,17 @@
+#include <initializer_list>
 #include <iostream>
+#include <format>
 #include <span>
 #include <string_view>
 #include <vector>
+
+using Str = std::string;
+using Strv = std::string_view;
+
+#define Vec std::vector
+
+#define logf(msg, ...) std::cout << std::format(msg, __VA_ARGS__) << "\n"
+#define log(msg) std::cout << msg << "\n"
 
 void build(std::span<std::string_view> args) {
 
@@ -17,18 +27,19 @@ void build(std::span<std::string_view> args) {
             break;
         }
     }
-    std::cout << "Building target: " << target << "\n";
+
+    logf("Building target: {}", target);
 }
 
 int main(int argc, char **argv) {
-    std::vector<std::string_view> args(argv + 1, argv + argc);
+    Vec<Strv> args(argv + 1, argv + argc);
 
-    if (args.empty() || args[0] == "--help") {
-        std::cout << "Usage: cmw <command> [options]\n";
+    if (args.empty() or args[0] == "-h" or args[0] == "--help") {
+        log("Usage ccmw <command> [options]");
         return 0;
     }
 
-    std::string_view const command = args[0];
+    Strv const command = args[0];
 
     if (command == "build")
         build(args);
