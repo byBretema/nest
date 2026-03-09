@@ -1,35 +1,34 @@
 
-################################################################################
-### Vars
-################################################################################
+#! Vars
 
 repo_root    := `git rev-parse --show-toplevel 2>/dev/null || pwd`
 compiler_cpp := `which clang++`
 compiler_c   := `which clang`
 
-subprojects := `for d in */; do [ -f "$d/CMakeLists.txt" ] && echo "${d%/}"; done | xargs`
+subprojects := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}"; fi; done`
 
 build_dir    := "build"
 subbuild_dir := build_dir / "subbuild"
 
 build_type := "Release"
 
+#! Interface
 
-################################################################################
-### Interface
-################################################################################
-
-help:
+[private]
+default: #_validate_subprojects
+    @echo
+    @echo "Available subprojects:"
+    @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
+        if echo "$p" | grep -q " "; then \
+            echo -e "    $p    \e[93m⚠️ Rename to '${p// /_}'\e[0m"; \
+        else \
+            echo "    $p"; \
+        fi \
+    done
+    @echo
     @just --list
 
-list:
-    @echo "Available subprojects: {{subprojects}}"
-    @just --list
-
-
-################################################################################
-### Privates
-################################################################################
+#! Privates
 
 _config flags="":
     @mkdir -p {{subbuild_dir}}
@@ -38,34 +37,37 @@ _config flags="":
       -DCMAKE_C_COMPILER="{{compiler_c}}" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -DCMAKE_COMPILE_WARNING_AS_ERROR=ON
-    @echo ""
+    @echo
     ln -sf {{repo_root}}/{{subbuild_dir}}/compile_commands.json {{repo_root}}/compile_commands.json
 
+# _validate_subprojects:
+#     @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
+#         if echo "$p" | grep -q " "; then \
+#             echo "⚠️ Rename '$p' to '${p// /_}' to avoid path issues on CMake generators."; \
+#         fi \
+#     done
 
-################################################################################
-### Build
-################################################################################
+_validate_subproject target:
+    @if echo "${{target}}" | grep -q " "; then \
+        echo -e "🔴 Target contains spaces, cannot be built.\nRename it from '$p' to '${p// /_}' to avoid path issues on CMake generators."; \
+    fi
 
-build name="all": _config
-    cmake --build {{subbuild_dir}} -j 24 --target {{name}}
+#! Build
 
-run project *args: (build project)
-    ./{{build_dir}}/bin/{{project}}/{{project}} {{args}}
+build target="all": (_validate_subproject target) _config
+    cmake --build {{subbuild_dir}} -j 24 --target "{{ replace(target, ' ', '_') }}"
 
-# test: build
-# cd {{build_dir}} && ctest --output-on-failure
+run target *args: (build target)
+    ./{{build_dir}}/bin/{{ replace(target, ' ', '_') }}/{{ replace(target, ' ', '_') }} {{args}}
 
+#! Cleanup
 
-################################################################################
-### Cleanup
-################################################################################
-  
-fresh:
-    rm -rf {{subbuild_dir}}/*
-    just config "--fresh"
-    just build
+# fresh:
+#     rm -rf {{subbuild_dir}}/*
+#     just config "--fresh"
+#     just build
 
-clean:
+clean target="all":
     rm -rf {{build_dir}}
     rm -f {{repo_root}}/compile_commands.json
     just config

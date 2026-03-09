@@ -116,7 +116,8 @@ endfunction()
 function(cm_SETUP_EXE)
     list(POP_FRONT ARGN a_LINK_DEPS)
 
-    get_filename_component(l_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    get_filename_component(l_NAME_AUX ${CMAKE_CURRENT_SOURCE_DIR} NAME)
+    string(REPLACE " " "_" l_NAME "${l_NAME_AUX}")
     project(${l_NAME})
 
     cm_ADD_EXE(${PROJECT_NAME} ${PROJECT_SOURCE_DIR})
