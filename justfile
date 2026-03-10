@@ -10,13 +10,14 @@ subprojects := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}
 build_dir    := "build"
 subbuild_dir := build_dir / "subbuild"
 
+fresh_flag := if path_exists(subbuild_dir) == "true" { "" } else { "--fresh" }
 
 build_type := "Release"
 
-#! Interface
+#! Privates
 
 [private]
-default: #_validate_subprojects
+default:
     @echo
     @echo "Available subprojects:"
     @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
@@ -28,10 +29,6 @@ default: #_validate_subprojects
     done
     @echo
     @just -l -u
-
-#! Privates
-
-fresh_flag := if path_exists(subbuild_dir) == "true" { "" } else { "--fresh" }
 
 [private]
 config flags="":
@@ -70,11 +67,7 @@ clean target="all":
 
 _clean_projects:
     rm -rf {{subbuild_dir}}/*
-    # just config "--fresh"
-    # just build
 
 _clean_all:
     rm -rf {{build_dir}}
     rm -f {{repo_root}}/compile_commands.json
-    # just config
-    # just build
