@@ -10,6 +10,7 @@ subprojects := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}
 build_dir    := "build"
 subbuild_dir := build_dir / "subbuild"
 
+
 build_type := "Release"
 
 #! Interface
@@ -20,19 +21,22 @@ default: #_validate_subprojects
     @echo "Available subprojects:"
     @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
         if echo "$p" | grep -q " "; then \
-            echo -e "    $p    \e[93m⚠️ Rename to '${p// /_}'\e[0m"; \
+            echo -e "    '$p'  \e[93m⚠️ Rename to '${p// /_}'\e[0m"; \
         else \
             echo "    $p"; \
         fi \
     done
     @echo
-    @just --list
+    @just -l -u
 
 #! Privates
 
-_config flags="":
+fresh_flag := if path_exists(subbuild_dir) == "true" { "" } else { "--fresh" }
+
+[private]
+config flags="":
     @mkdir -p {{subbuild_dir}}
-    cmake -S . -G "Ninja" -B {{subbuild_dir}} {{flags}} \
+    cmake -S . -G "Ninja" -B {{subbuild_dir}} {{flags}} {{fresh_flag}}\
       -DCMAKE_CXX_COMPILER="{{compiler_cpp}}" \
       -DCMAKE_C_COMPILER="{{compiler_c}}" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -40,35 +44,37 @@ _config flags="":
     @echo
     ln -sf {{repo_root}}/{{subbuild_dir}}/compile_commands.json {{repo_root}}/compile_commands.json
 
-# _validate_subprojects:
-#     @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
-#         if echo "$p" | grep -q " "; then \
-#             echo "⚠️ Rename '$p' to '${p// /_}' to avoid path issues on CMake generators."; \
-#         fi \
-#     done
-
-_validate_subproject target:
-    @if echo "${{target}}" | grep -q " "; then \
-        echo -e "🔴 Target contains spaces, cannot be built.\nRename it from '$p' to '${p// /_}' to avoid path issues on CMake generators."; \
+[private]
+[no-exit-message]
+validate target:
+    @if echo "{{target}}" | grep -q " "; then \
+        echo "🔴 Target '{{target}}' contains spaces, cannot be built."; \
+        exit 1; \
     fi
 
 #! Build
 
-build target="all": (_validate_subproject target) _config
-    cmake --build {{subbuild_dir}} -j 24 --target "{{ replace(target, ' ', '_') }}"
+# target = all / <project_name>
+build target="all": (validate target) config
+    cmake --build {{subbuild_dir}} -j 24 --target "{{target}}"
 
+# target = all / <project_name>
 run target *args: (build target)
-    ./{{build_dir}}/bin/{{ replace(target, ' ', '_') }}/{{ replace(target, ' ', '_') }} {{args}}
+    ./{{build_dir}}/bin/{{target}}/{{target}} {{args}}
 
 #! Cleanup
 
-# fresh:
-#     rm -rf {{subbuild_dir}}/*
-#     just config "--fresh"
-#     just build
-
+# target = all / src  (wipe 'all' or 'projects only')
 clean target="all":
+    just _clean_{{target}}
+
+_clean_projects:
+    rm -rf {{subbuild_dir}}/*
+    # just config "--fresh"
+    # just build
+
+_clean_all:
     rm -rf {{build_dir}}
     rm -f {{repo_root}}/compile_commands.json
-    just config
-    just build
+    # just config
+    # just build
