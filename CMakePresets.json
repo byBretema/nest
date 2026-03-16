@@ -5,20 +5,27 @@
     "minor": 20,
     "patch": 0
   },
+  "vendor": {
+    "cm_deps": [
+      {
+        "name": "glm",
+        "version": "1.0.3",
+        "sys_first": "FALSE",
+        "url": "https://github.com/g-truc/glm/archive/refs/tags/1.0.3.zip"
+      }
+    ]
+  },
   "configurePresets": [
     {
       "name": "base-config",
       "hidden": true,
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/subbuild",
+      "binaryDir": "${sourceDir}/build/obj",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
       "name": "dev",
-      "displayName": "Development (Debug)",
-      "description": "Standard local build without sanitizers.",
       "inherits": "base-config",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -28,8 +35,6 @@
     },
     {
       "name": "dev-strict",
-      "displayName": "Development (Debug)",
-      "description": "Standard local build without sanitizers.",
       "inherits": "base-config",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -39,8 +44,6 @@
     },
     {
       "name": "dev-asan",
-      "displayName": "Memory Debugging (ASan)",
-      "description": "Debug build with AddressSanitizer enabled to catch leaks.",
       "inherits": "base-config",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -50,8 +53,6 @@
     },
     {
       "name": "release",
-      "displayName": "Release",
-      "description": "Optimized build for performance testing.",
       "inherits": "base-config",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
@@ -61,8 +62,6 @@
     },
     {
       "name": "release-strict",
-      "displayName": "Strict Release (CI Ready)",
-      "description": "Optimized build that treats all warnings as fatal errors.",
       "inherits": "release",
       "cacheVariables": {
         "CM_WARNINGS_AS_ERRORS": "ON"

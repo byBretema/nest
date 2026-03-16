@@ -53,6 +53,40 @@ function(cm_LINK_DEPS proj_name)
 
 endfunction()
 
+function(cm_LOAD_DEPENDENCIES)
+
+    set(l_PRESETS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/CMakePresets.json")
+
+    if(NOT EXISTS "${l_PRESETS_FILE}")
+        message(WARNING "[cm] · No CMakePresets.json found. Skipping dependencies.")
+        return()
+    endif()
+
+    file(READ "${l_PRESETS_FILE}" l_JSON_STR)
+
+    string(JSON l_DEP_COUNT ERROR_VARIABLE l_JSON_ERR LENGTH "${l_JSON_STR}" "vendor" "cm_deps")
+
+    if(l_JSON_ERR OR l_DEP_COUNT EQUAL 0)
+        message(DEBUG "[cm] · No dependencies found in CMakePresets.json.")
+        return()
+    endif()
+
+    message(STATUS "[cm] · Parsing dependencies from CMakePresets.json...")
+
+    math(EXPR l_LAST_INDEX "${l_DEP_COUNT} - 1")
+
+    foreach(l_INDEX RANGE ${l_LAST_INDEX})
+        string(JSON l_NAME GET "${l_JSON_STR}" "vendor" "cm_deps" ${l_INDEX} "name")
+        string(JSON l_VER  GET "${l_JSON_STR}" "vendor" "cm_deps" ${l_INDEX} "version")
+        string(JSON l_SYS  GET "${l_JSON_STR}" "vendor" "cm_deps" ${l_INDEX} "sys_first")
+        string(JSON l_URL  GET "${l_JSON_STR}" "vendor" "cm_deps" ${l_INDEX} "url")
+
+        cm_ADD_DEP("${l_NAME}" "${l_VER}" "${l_URL}" "${l_SYS}")
+    endforeach()
+
+endfunction()
+
+
 function(cm_SET_OUTPUT_DIR proj_name dir_name)
 
     if (NOT MSVC)

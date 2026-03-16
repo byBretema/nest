@@ -1,7 +1,6 @@
 
 #! Vars
 
-# repo_root    := `git rev-parse --show-toplevel 2>/dev/null || pwd`
 root         := justfile_directory()
 compiler_cpp := `which clang++`
 compiler_c   := `which clang`
@@ -9,7 +8,7 @@ compiler_c   := `which clang`
 subprojects := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}"; fi; done`
 
 build_dir    := root / "build"
-subbuild_dir := build_dir / "subbuild"
+subbuild_dir := build_dir / "obj"
 
 fresh_flag := if path_exists(subbuild_dir) == "true" { "" } else { "--fresh" }
 
@@ -56,12 +55,11 @@ build target="all": (validate target) config
 
 # target = all / <project_name>
 run target *args: (build target)
-    ./{{build_dir}}/bin/{{target}}/{{target}} {{args}}
+    {{build_dir}}/bin/{{target}}/{{target}} {{args}}
 
 # target = all / <project_name>
 [working-directory("{{subbuild}}")]
 test target *args: (build target)
-    # cmake -E chdir {{subbuild_dir}}
     ctest --output-on-failure --parallel 8 -C {{preset}}
 
 #! Cleanup
