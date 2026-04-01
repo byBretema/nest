@@ -49,39 +49,6 @@ endmacro()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-# function(nest_LOAD_DEPENDENCIES)
-#     set(l_PRESETS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/CMakePresets.json")
-
-#     if(NOT EXISTS "${l_PRESETS_FILE}")
-#         message(WARNING "[nest] · No CMakePresets.json found. Skipping dependencies.")
-#         return()
-#     endif()
-
-#     file(READ "${l_PRESETS_FILE}" l_JSON_STR)
-
-#     string(JSON l_DEP_COUNT ERROR_VARIABLE l_JSON_ERR LENGTH "${l_JSON_STR}" "vendor" "__nest_deps")
-
-#     if(l_JSON_ERR OR l_DEP_COUNT EQUAL 0)
-#         message(DEBUG "[nest] · No dependencies found in CMakePresets.json.")
-#         return()
-#     endif()
-
-#     message(STATUS "[nest] · Parsing dependencies from CMakePresets.json...")
-
-#     math(EXPR l_LAST_INDEX "${l_DEP_COUNT} - 1")
-
-#     foreach(l_INDEX RANGE ${l_LAST_INDEX})
-#         string(JSON l_NAME GET "${l_JSON_STR}" "vendor" "__nest_deps" ${l_INDEX} "name")
-#         string(JSON l_VER GET "${l_JSON_STR}" "vendor" "__nest_deps" ${l_INDEX} "version")
-#         string(JSON l_SYS GET "${l_JSON_STR}" "vendor" "__nest_deps" ${l_INDEX} "sys_first")
-#         string(JSON l_URL GET "${l_JSON_STR}" "vendor" "__nest_deps" ${l_INDEX} "url")
-
-#         nest_ADD_DEP("${l_NAME}" "${l_VER}" "${l_URL}" "${l_SYS}")
-#     endforeach()
-# endfunction()
-
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 function(nest_DETECT_PROJECTS)
     set(l_FOUND_DIRS "")
     set(l_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -157,18 +124,18 @@ endfunction()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function(nest_SETUP_EXE)
+macro(nest_SETUP_EXE)
     _m_nest_INIT_TARGET_SCOPE(${ARGN})
 
     _nest_ADD_EXE(${PROJECT_NAME} ${PROJECT_SOURCE_DIR})
     _nest_SET_OUTPUT_DIR(${PROJECT_NAME} "bin/${PROJECT_NAME}")
 
     _m_nest_APPLY_STANDARD_PROPS(${PROJECT_NAME})
-endfunction()
+endmacro()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function(nest_SETUP_LIB lib_type)
+macro(nest_SETUP_LIB lib_type)
     _m_nest_INIT_TARGET_SCOPE(${ARGN})
 
     _nest_ADD_LIB(${PROJECT_NAME} ${PROJECT_SOURCE_DIR} ${lib_type})
@@ -176,11 +143,11 @@ function(nest_SETUP_LIB lib_type)
     _nest_SET_OUTPUT_DIR(${PROJECT_NAME} "lib/${PROJECT_NAME}")
 
     _m_nest_APPLY_STANDARD_PROPS(${PROJECT_NAME})
-endfunction()
+endmacro()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function(nest_SETUP_HEADER_LIB)
+macro(nest_SETUP_HEADER_LIB)
     _m_nest_INIT_TARGET_SCOPE(${ARGN})
 
     message(STATUS "[nest] · HeaderLib: ${PROJECT_NAME}")
@@ -198,7 +165,7 @@ function(nest_SETUP_HEADER_LIB)
     if(l_DO_LINK AND __nest_DEPS)
         target_link_libraries(${PROJECT_NAME} INTERFACE ${__nest_DEPS})
     endif()
-endfunction()
+endmacro()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -206,7 +173,7 @@ function(nest_LINK_INTERNAL)
     if(ARGN)
         message(STATUS "[nest] · Internal : ${PROJECT_NAME} linking to [${ARGN}]")
         target_link_libraries(${PROJECT_NAME} PRIVATE ${ARGN})
-        target_include_directories(${PROJECT_NAME} PUBLIC ${ARGN})
+        # target_include_directories(${PROJECT_NAME} PUBLIC ${ARGN})
     endif()
 endfunction()
 
@@ -329,7 +296,7 @@ endmacro()
 macro(_m_nest_APPLY_STANDARD_PROPS target_name)
     set_target_properties(${target_name} PROPERTIES
         CXX_EXTENSIONS OFF
-        CXX_VISIBILITY_PRESET hidden
+        # CXX_VISIBILITY_PRESET hidden  # Shoud be hidden and manage import/export macros for visibility
         VISIBILITY_INLINES_HIDDEN ON
         EXPORT_COMPILE_COMMANDS ON
     )
