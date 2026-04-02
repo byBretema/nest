@@ -143,6 +143,16 @@ macro(nest_SETUP_LIB lib_type)
     _nest_SET_OUTPUT_DIR(${PROJECT_NAME} "lib/${PROJECT_NAME}")
 
     _m_nest_APPLY_STANDARD_PROPS(${PROJECT_NAME})
+
+    if("${lib_type}" STREQUAL "SHARED")
+        include(GenerateExportHeader)
+        string(TOUPPER "${PROJECT_NAME}" l_TARGET_UPPER)
+        generate_export_header(${PROJECT_NAME}
+            EXPORT_MACRO_NAME "${l_TARGET_UPPER}_API"
+            EXPORT_FILE_NAME  "export.h"
+        )
+        target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
 endmacro()
 
 # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -171,9 +181,8 @@ endmacro()
 
 function(nest_LINK_INTERNAL)
     if(ARGN)
-        message(STATUS "[nest] · Internal : ${PROJECT_NAME} linking to [${ARGN}]")
+        message(STATUS "[nest] · Internal : Linking '${PROJECT_NAME}' to [${ARGN}]")
         target_link_libraries(${PROJECT_NAME} PRIVATE ${ARGN})
-        # target_include_directories(${PROJECT_NAME} PUBLIC ${ARGN})
     endif()
 endfunction()
 
@@ -296,7 +305,7 @@ endmacro()
 macro(_m_nest_APPLY_STANDARD_PROPS target_name)
     set_target_properties(${target_name} PROPERTIES
         CXX_EXTENSIONS OFF
-        # CXX_VISIBILITY_PRESET hidden  # Shoud be hidden and manage import/export macros for visibility
+        CXX_VISIBILITY_PRESET hidden
         VISIBILITY_INLINES_HIDDEN ON
         EXPORT_COMPILE_COMMANDS ON
     )

@@ -1,3 +1,4 @@
 #pragma once
+#include "export.h"
 
-void hello_mylib1();
+MYLIB1_API void hello_mylib1();
