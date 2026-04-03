@@ -1,15 +1,5 @@
 {
   "version": 3,
-  "vendor": {
-    "nest_deps": [
-      {
-        "name": "glm",
-        "version": "1.0.3",
-        "sys_first": "OFF",
-        "url": "https://github.com/g-truc/glm/archive/refs/tags/1.0.3.zip"
-      }
-    ]
-  },
   "configurePresets": [
     {
       "hidden": true,

@@ -5,7 +5,7 @@
 
 include(FetchContent)
 
-set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/build/deps")
+set(FETCHCONTENT_BASE_DIR "${CMAKE_SOURCE_DIR}/.nest/deps")
 
 # Gets track of all external dependencies added via nest_ADD_DEP, to link them easily later
 set(__nest_DEPS "" CACHE INTERNAL "Global external dependencies list")
@@ -146,10 +146,10 @@ macro(nest_SETUP_LIB lib_type)
 
     if("${lib_type}" STREQUAL "SHARED")
         include(GenerateExportHeader)
-        string(TOUPPER "${PROJECT_NAME}" l_TARGET_UPPER)
+        string(TOUPPER "${PROJECT_NAME}" l_PROJECT_UPPER)
         generate_export_header(${PROJECT_NAME}
-            EXPORT_MACRO_NAME "${l_TARGET_UPPER}_API"
-            EXPORT_FILE_NAME  "export.h"
+            EXPORT_MACRO_NAME "${l_PROJECT_UPPER}_API"
+            EXPORT_FILE_NAME  "${CMAKE_CURRENT_SOURCE_DIR}/export.h"
         )
         target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR})
     endif()
@@ -340,15 +340,16 @@ function(s_nest_SCAFFOLD target_name target_type)
 
     if(target_type STREQUAL "EXE")
         file(WRITE "${l_TARGET_DIR}/CMakeLists.txt" "nest_SETUP_EXE()\n")
-        file(WRITE "${l_TARGET_DIR}/main.cpp"
-"#include <iostream>\n\nint main() {\n    std::cout << \"Hello from ${target_name}!\\n\";\n    return 0;\n}\n")
+        file(WRITE "${l_TARGET_DIR}/main.cpp" "#include <cstdio>\n\nint main() {\n    std::puts(\"Hello from ${target_name}!\");\n}\n")
         message(STATUS "✅ Created executable project '${target_name}'")
     else()
         file(WRITE "${l_TARGET_DIR}/CMakeLists.txt" "nest_SETUP_LIB(${target_type})\n")
-        file(WRITE "${l_TARGET_DIR}/${target_name}.hpp"
-"#pragma once\n\nvoid hello_${target_name}();\n")
-        file(WRITE "${l_TARGET_DIR}/${target_name}.cpp"
-"#include \"${target_name}.hpp\"\n#include <iostream>\n\nvoid hello_${target_name}() {\n    std::cout << \"Hello from the ${target_name} library!\\n\";\n}\n")
+        file(WRITE "${l_TARGET_DIR}/${target_name}.hpp" "#pragma once\n")
+        if(target_type STREQUAL "EXE")
+            file(WRITE "${l_TARGET_DIR}/${target_name}.hpp" "#include \"export.h\"\n")
+        endif()
+
+        file(WRITE "${l_TARGET_DIR}/${target_name}.cpp" "#include \"${target_name}.hpp\"\n")
         message(STATUS "✅ Created ${target_type} library project '${target_name}'")
     endif()
 endfunction()

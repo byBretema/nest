@@ -8,7 +8,8 @@ root         := justfile_directory()
 nest_dir     := root / ".nest"
 build_dir    := nest_dir / "build"
 
-subprojects  := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}"; fi; done`
+projects     := `for d in */; do if [ -f "$d/CMakeLists.txt" ]; then echo "${d%/}"; fi; done`
+presets      := `cmake --list-presets 2>/dev/null | awk -F'"' '/^[[:space:]]+"/ {print $2}'`
 
 fresh_flag   := if path_exists(build_dir) == "true" { "" } else { "--fresh" }
 
@@ -27,14 +28,11 @@ generator    := "Ninja"
 [private]
 default:
     @echo
-    @echo "Available subprojects:"
-    @printf '%s\n' "{{subprojects}}" | while IFS= read -r p; do \
-        if echo "$p" | grep -q " "; then \
-            echo -e "    '$p'  \e[93m⚠️ Rename to '${p// /_}'\e[0m"; \
-        else \
-            echo "    $p"; \
-        fi \
-    done
+    @echo "Available projects:"
+    @echo "{{projects}}" | while read -r p; do if [ -n "$p" ]; then echo "    $p"; fi; done
+    @echo
+    @echo "Available presets:"
+    @echo "{{presets}}"  | while read -r p; do if [ -n "$p" ]; then echo "    $p"; fi; done
     @echo
     @just -l -u
 
@@ -53,16 +51,17 @@ validate target:
         exit 1; \
     fi
 
+
 #
 ## Manage
 ################################################################################
 
-# Scaffolds a new executable project
-addbin name:
+# Scaffolds a new exe
+add_exe name:
     @cmake -DNEST_DO_SCAFFOLD=ON -DTARGET_NAME="{{name}}" -DTARGET_TYPE="EXE" -P vendor/nest.cmake
 
-# Scaffolds a new library project (Defaults to SHARED if type is omitted)
-addlib name type="SHARED":
+# Scaffolds a new lib (type = SHARED / STATIC)
+add_lib name type="SHARED":
     @cmake -DNEST_DO_SCAFFOLD=ON -DTARGET_NAME="{{name}}" -DTARGET_TYPE="{{type}}" -P vendor/nest.cmake
 
 
@@ -71,12 +70,14 @@ addlib name type="SHARED":
 ################################################################################
 
 # target = all / <project_name>
+[no-exit-message]
 build target="all": (validate target) config
     cmake --build "{{build_dir}}" -j {{parallel}} --target "{{target}}"
 
 # target = all / <project_name>
 run target *args: (build target)
-    "{{nest_dir}}/bin/{{target}}/{{target}}" {{args}}
+    @echo
+    @"{{nest_dir}}/bin/{{target}}/{{target}}" {{args}}
 
 # target = all / <project_name>
 test target="all" *args: (build target)
@@ -91,13 +92,13 @@ test target="all" *args: (build target)
 
 # target = all / projects  (wipe 'all' or 'projects only')
 clean target="all":
-    just _clean_{{target}}
+    @just _clean_{{target}}
 
 [private]
 _clean_projects:
-    rm -rf "{{build_dir}}"/*
+    @rm -rf "{{build_dir}}"/*
 
 [private]
 _clean_all:
-    rm -rf "{{nest_dir}}"
-    rm -f "{{root}}/compile_commands.json"
+    @rm -rf "{{nest_dir}}"
+    @rm -f "{{root}}/compile_commands.json"
